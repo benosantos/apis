@@ -44,6 +44,24 @@ class Atividade(Base):
 
     def __repr__(self):
         return f'<Atividade {self.nome} de {self.pessoa.nome}>'
+    
+
+class Usuarios(Base):
+    __tablename__ = 'usuarios'
+    id = Column(Integer, primary_key=True)
+    login = Column(String(80), unique=True)
+    senha = Column(String(20))
+
+    def __repr__(self):
+        return f'<Usuario {self.login}>'
+    
+    def save(self):
+        db_session.add(self)
+        db_session.commit()
+
+    def delete(self):
+        db_session.delete(self)
+        db_session.commit()
 
 def init_db():
     Base.metadata.create_all(bind=engine)

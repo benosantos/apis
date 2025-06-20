@@ -1,9 +1,25 @@
 from flask import Flask, request, abort
 from flask_restful import Resource, Api
-from models import db_session, init_db, Pessoa, Atividade
+from flask_httpauth import HTTPBasicAuth
+from models import db_session, init_db, Pessoa, Atividade, Usuarios
+
+
 
 app = Flask(__name__)
 api = Api(app)
+auth = HTTPBasicAuth()
+
+# USUARIOS = {
+#   'beno'  : '123',
+#   'santos': '321'
+#            }
+
+
+@auth.verify_password
+def verificacao(login, senha):
+    if not (login, senha):
+        return False
+    return Usuarios.query.filter_by(login=login, senha=senha).first()
 
 
 @app.teardown_appcontext
@@ -11,6 +27,7 @@ def shutdown_session(exception=None):
     db_session.remove()
 
 class PessoaResource(Resource):
+    @auth.login_required
     def get(self, nome):
         p = Pessoa.query.filter_by(nome=nome).first()
         if not p:
@@ -35,6 +52,7 @@ class PessoaResource(Resource):
         return {'status':'sucesso','mensagem':f'Pessoa {nome} excluída com sucesso'}
 
 class ListaPessoasResource(Resource):
+    @auth.login_required
     def get(self):
         lista = Pessoa.query.all()
         return [{'id':x.id,'nome':x.nome,'idade':x.idade} for x in lista]
@@ -67,6 +85,8 @@ class ListaAtividadesResource(Resource):
 api.add_resource(PessoaResource, '/pessoa/<string:nome>')
 api.add_resource(ListaPessoasResource, '/pessoa')
 api.add_resource(ListaAtividadesResource, '/atividades')
+
+
 
 if __name__ == '__main__':
     init_db()
